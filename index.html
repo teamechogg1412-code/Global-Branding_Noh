@@ -36,7 +36,7 @@
         margin: 0;
         padding: 0;
         font-family: 'Pretendard', sans-serif;
-        overflow: hidden; /* 스크롤은 main-wrapper에서 제어 */
+        overflow: auto; /* 스크롤은 main-wrapper에서 제어 */
     }
 
     img { -webkit-touch-callout: none; pointer-events: none; }
@@ -142,24 +142,24 @@
     .child-sidebar {
         position: fixed;
         top: 85px;          /* 상단 바와의 여유 공간 */
-        left: -280px;       /* 초기 숨김 위치 */
-        width: 240px; 
-        height: calc(100vh - 120px); /* 하단 여유 공간 */
+        left: -220px;       /* [수정] 초기 숨김 위치 (너비 + 여유분) */
+        width: 180px;       /* [수정] 너비 축소 (기존 240px -> 180px) */
+        height: calc(100vh - 120px); 
         background: var(--sidebar-bg);
         backdrop-filter: blur(20px);
         z-index: 99999;
         transition: transform 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
-        box-shadow: 0 15px 40px rgba(0,0,0,0.15); /* 사방 그림자로 플로팅 강조 */
+        box-shadow: 0 15px 40px rgba(0,0,0,0.15); 
         display: flex;
         flex-direction: column;
         padding: 30px 15px;
-        border: 1px solid rgba(0,0,0,0.05); /* 밀착형이 아니므로 테두리 추가 */
-        border-radius: 20px; /* 둥근 모서리로 부드러운 느낌 */
+        border: 1px solid rgba(0,0,0,0.05); 
+        border-radius: 20px; 
     }
 
     .child-sidebar.show {
-        /* 화면 왼쪽 끝(0)에서 20px 띄운 지점까지만 이동 */
-        transform: translateX(300px); 
+        /* [수정] 화면 왼쪽 끝에서 20px 띄운 지점까지 이동 (-220px + 240px = 20px) */
+        transform: translateX(240px); 
     }
 
     .sidebar-title {
@@ -205,12 +205,12 @@
 
     .section-wrapper {
         height: 100vh;
-        width: 100%;
+        width: 100vw;
         display: flex;
-        align-items: center;
-        justify-content: center;
-        scroll-snap-align: center;
-        flex-shrink: 0;
+        align-items: center; /* 수직 중앙 */
+        justify-content: center; /* 수평 중앙 */
+        overflow: hidden; /* 넘치는 부분 숨김 */
+        position: relative;
     }
 
     /* --- [5. 슬라이드 기본 설정 (1280x720 고정)] --- */
@@ -220,16 +220,26 @@
         padding: 20px 50px 40px 50px !important;
         box-sizing: border-box;
         display: flex;
+        flex-shrink: 0; 
+        transform-origin: center center;
         flex-direction: column;
         position: relative;
         overflow: hidden;
         border-radius: 15px;
         box-shadow: 0 20px 40px rgba(0,0,0,0.5);
         margin-left: 250px;
+        transition: transform 0.1s ease-out;
     }
 
     .slide.light { background-color: #fff; color: #2d3436; }
     .slide.dark { background-color: #121212; color: #fff; }
+
+    /* 모바일/태블릿(화면 너비 1280px 이하)일 때 사이드바 여백 제거 */
+    @media (max-width: 1280px) {
+        .slide {
+            margin-left: 0 !important; /* 사이드바 공간 무시하고 중앙 정렬 */
+        }
+    }
 
     /* 워터마크 (Confidential) */
     .slide::after {
@@ -449,6 +459,52 @@
         color: var(--accent-gold); /* 골드색으로 핵심 단어 강조 */
         font-weight: 700;
     }
+    /* 줌 컨트롤러 스타일 */
+    .zoom-controls {
+        position: fixed;
+        top: 20px;
+        right: 20px; /* 우측 상단 배치 (스크롤바 고려해서 위치 조정 가능) */
+        z-index: 99999;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(10px);
+        padding: 8px 12px;
+        border-radius: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .zoom-btn {
+        background: none;
+        border: none;
+        color: white;
+        cursor: pointer;
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: background 0.2s;
+    }
+
+    .zoom-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .zoom-btn:active {
+        transform: scale(0.95);
+    }
+
+    #zoom-level {
+        color: white;
+        font-size: 14px;
+        font-weight: 600;
+        min-width: 45px;
+        text-align: center;
+        font-family: 'Pretendard', sans-serif;
+    }
 </style>
 </head>
 <body><div id="security-gate">
@@ -463,7 +519,7 @@
         <div class="gate-warning">
             <p>본 페이지는 에코글로벌그룹이 배우님을 위해 수립한 <br>
             <P><strong>전략적 로드맵</strong>과 <strong>개발 중인 마케팅 페이지 시안</strong>을 포함하고 있습니다.</p>
-            <p>오직 <strong>노상현 배우님</strong>과 <strong>관계자분들께만</strong> 제공되는 소중한 대외비 자산인 만큼,</p>
+            <p>오직 <strong>노상현 배우님</strong>에게만 공개하는 소중한 대외비 자산인 만큼,</p>
             <p>소중한 정보가 안전하게 관리될 수 있도록 협조 부탁드립니다.</p>
         </div>
 
@@ -523,6 +579,20 @@
     <nav id="sidebar-content">
         </nav>
 </aside>
+<div class="zoom-controls">
+    <button onclick="controlZoom(-0.1)" class="zoom-btn">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+    </button>
+    <span id="zoom-level">100%</span>
+    <button onclick="controlZoom(0.1)" class="zoom-btn">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+    </button>
+</div>
 <div class="main-wrapper">
     <div class="scroll-nav">
         <button class="scroll-btn" onclick="moveSlide(-1)">▲</button>
@@ -6334,6 +6404,31 @@
         }).join('');
     }
 
+    let currentScale = 1.0; // 기본 배율 1.0
+
+        function controlZoom(change) {
+            // 배율 변경 (최소 0.3 ~ 최대 2.0까지만 제한)
+            const newScale = currentScale + change;
+            if (newScale < 0.3 || newScale > 2.0) return;
+
+            currentScale = newScale;
+
+            // 모든 슬라이드 찾아서 크기 조절
+            const slides = document.querySelectorAll('.slide');
+            slides.forEach(slide => {
+                // 중요: 기존의 중앙 정렬(translateY)을 유지하면서 scale만 변경
+                slide.style.transform = `translateY(-50%) scale(${currentScale})`;
+            });
+
+            // 가운데 % 숫자 업데이트
+            document.getElementById('zoom-level').innerText = Math.round(currentScale * 100) + '%';
+        }
+
+        // (옵션) 모바일 접속 시 자동으로 조금 작게 시작하게 하려면 아래 주석을 푸세요
+        if (window.innerWidth < 768) {
+            controlZoom(-0.4); // 60%로 시작
+        }
+        
     /**
      * [5] 사이드바 닫기 함수
      */
@@ -6404,6 +6499,50 @@
             e.preventDefault();
         }
     });
+    /* --- [JS 추가: 화면 맞춤 스케일링 스크립트] --- */
+    function fitSlideToScreen() {
+        const slides = document.querySelectorAll('.slide');
+        const baseWidth = 1280; // 슬라이드 원본 너비
+        const baseHeight = 720; // 슬라이드 원본 높이
+        
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+
+        // 화면 비율과 슬라이드 비율을 계산해서 축소 비율(Scale) 산출
+        let scaleX = windowWidth / baseWidth;
+        let scaleY = windowHeight / baseHeight;
+        
+        // 너비와 높이 중 더 작은 쪽을 기준으로 비율 설정 (화면에 꽉 차게)
+        // 단, 1280px보다 화면이 클 때는 확대하지 않음 (1로 고정하려면 Math.min에 1 추가)
+        let scale = Math.min(scaleX, scaleY); 
+
+        // 화면이 1280px보다 작을 때만 마진 제거 로직 발동 등을 위해
+        // PC에서는 1배율 이상으로 커지지 않게 제한 (선택사항, 지금은 제거함)
+        
+        // 모바일/태블릿 여백 확보를 위해 0.95 정도 곱해줌 (화면 꽉 차서 답답한 것 방지)
+        if (windowWidth < 1280) {
+            scale *= 0.95; 
+        }
+
+        slides.forEach(slide => {
+            // 스케일 적용
+            slide.style.transform = `scale(${scale})`;
+            
+            // 스케일이 줄어들면 원래 차지하던 공간은 그대로라서 여백이 생김.
+            // 이를 방지하기 위해 네거티브 마진이나 절대 위치를 쓸 수도 있지만,
+            // flexbox 중앙 정렬(.section-wrapper)이 되어 있다면 transform만으로 충분합니다.
+            
+            // *중요: 태블릿 세로 모드 등에서 슬라이드가 너무 작아 보이면 아래 코드로 높이 강제 조정 가능
+            // slide.style.height = `${baseHeight}px`; 
+            // slide.style.width = `${baseWidth}px`;
+        });
+    }
+
+    // 1. 페이지 로드 시 실행
+    window.addEventListener('load', fitSlideToScreen);
+
+    // 2. 화면 크기 바뀔 때마다(가로/세로 회전 등) 실행
+    window.addEventListener('resize', fitSlideToScreen);
 </script>
 </body>
 </html>
