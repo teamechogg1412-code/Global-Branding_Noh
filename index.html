@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>배우 노상현 2026 로드맵 - CONFIDENTIAL</title>
 <style>
 
@@ -6195,7 +6195,7 @@
             }
         });
         
-        // 2. 비밀번호 체크 함수 (8시간 단위 + 08시 타임 1.5시간 연장)
+        // 2. 비밀번호 체크 함수 (8시간 단위 + 1.5시간 연장 + 텔레그램 알림)
         window.checkGatePassword = function() {
             const now = new Date();
             const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
@@ -6203,7 +6203,7 @@
 
             const day = ("0" + kst.getDate()).slice(-2);
             const hour = kst.getHours();
-            const minutes = kst.getMinutes(); // 분 단위 체크를 위해 추가
+            const minutes = kst.getMinutes(); 
 
             // [기본 로직] 현재 시간 기준 8시간 블록 계산 (00, 08, 16)
             const currentBlockNum = Math.floor(hour / 8) * 8;
@@ -6214,19 +6214,34 @@
 
             // [예외 로직] 16:00 ~ 17:30 사이라면 '08'시 비밀번호도 허용
             let extendedPassword = null;
-            
-            // 현재 블록이 16시이고, 시간이 16시이거나 17시 30분 이하일 때
             if (currentBlockNum === 16) {
                 if (hour === 16 || (hour === 17 && minutes <= 30)) {
-                    // 08시 타임 패스워드 생성
                     extendedPassword = "1412" + day + "08"; 
                 }
             }
 
             const inputVal = document.getElementById('gate-pass').value;
 
-            // 입력값이 '현재 비번' 이거나 '연장된 08시 비번' 이면 통과
+            // ★ 정답일 경우 실행
             if (inputVal === currentPassword || (extendedPassword && inputVal === extendedPassword)) {
+                
+                // ============================================================
+                // [텔레그램 알림 전송]
+                // ============================================================
+                const botToken = "7878298869:AAGqjMdxwzZtIm10aBwPwvupjJzXx4uFwsg";
+                const chatId = "6840630849";
+                
+                const accessTime = kst.toLocaleString('ko-KR');
+                const userAgent = navigator.userAgent; // 접속 기기 정보
+                
+                const msgText = `🚨 **[CONFIDENTIAL] 접속 감지!**\n\n⏰ 시간: ${accessTime}\n📱 기기: ${userAgent}\n🔑 입력한 비번: ${inputVal}`;
+
+                // 비동기로 조용히 전송
+                const url = `https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(msgText)}&parse_mode=Markdown`;
+                
+                fetch(url).catch(err => console.log("알림 전송 에러(차단됨 등):", err));
+                // ============================================================
+
                 const gate = document.getElementById('security-gate');
                 gate.style.transition = "0.8s ease";
                 gate.style.opacity = "0";
@@ -6240,6 +6255,7 @@
                 document.getElementById('gate-pass').value = "";
             }
         };
+
         // 엔터키 지원
         document.getElementById('gate-pass').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') { checkGatePassword(); }
@@ -6248,9 +6264,10 @@
         // 초기 html 숨김 해제 (게이트가 대신 막고 있음)
         document.documentElement.style.display = "block";
 
-        // 보안 로직 (우클릭/캡처 방지 유지)
+        // 보안 로직 (우클릭 방지)
         document.addEventListener('contextmenu', e => e.preventDefault());
     })();
+
     // [1] 전역 변수 및 섹션 설정
     let currentSectionIndex = 0;
     const sections = document.querySelectorAll('.section-wrapper');
@@ -6261,12 +6278,12 @@
     const sidebarContent = document.getElementById('sidebar-content');
     const sidebarCategoryTitle = document.getElementById('sidebar-category-title');
 
-    // [2] 메뉴 데이터 (최종 인덱스 및 설정 반영)
+    // [2] 메뉴 데이터
     const menuData = {
         'SUMMARY': {
             title: 'MONTHLY SUMMARY',
             color: '#6c5ce7',
-            firstIndex: 0, // 마더 탭 클릭 시 이동할 인덱스
+            firstIndex: 0,
             items: [
                 { name: '01. 2026 로드맵', index: 1 },
                 { name: '02. 01월 PLAN', index: 2 },
@@ -6293,14 +6310,13 @@
                 { name: '07. 드랍 데이터 분석', index: 44 },
                 { name: '08. 경쟁 모델 분석', index: 45 },
                 { name: '09. 브랜드 매칭 로드맵', index: 46 },
-                // 여기에 추가 (index 대신 url을 넣거나 함수를 실행하게 설정)
                 { name: '⭐ 세일즈용 웹 시안 (Demo)', url: 'web/demo.html' }
             ]
         },
         'STRATEGY': {
             title: 'Sang-hyun Checkpoint',
             color: '#c2a37d',
-            firstIndex: 4, // 마더 탭 클릭 시 이동할 인덱스
+            firstIndex: 4,
             items: [
                 { name: '01. FAN MEETING_ROADMAP', index: 4 },
                 { name: '02. FASHION BRANDING', index: 5 },
@@ -6316,9 +6332,7 @@
     };
 
     /**
-     * [3] 마더 탭 클릭 함수
-     * 기능 1. 해당 대주제 시작 페이지로 즉시 이동
-     * 기능 2. 자식 메뉴 사이드바를 해당 카테고리 내용으로 즉시 전환
+     * [3] 마더 탭 클릭 함수 (수정됨: 닫기 로직 제거 -> 항상 열림 유지)
      */
     window.toggleSidebar = function(category, event) {
         if (event) event.stopPropagation();
@@ -6327,26 +6341,15 @@
         if (!data) return;
 
         const isOpen = sidebar.classList.contains('show');
-        const isSameCategory = sidebar.dataset.current === category;
 
-        // 이미 같은 카테고리가 열려있는 상태에서 다시 누르면 사이드바만 닫음
-        if (isOpen && isSameCategory) {
-            closeSidebar();
-            return;
-        }
-
-        // [행동 1] 섹션 이동
+        // 같은 버튼을 눌러도 닫지 않고 해당 카테고리 첫 페이지로 이동 및 갱신
         scrollToSlide(data.firstIndex);
-
-        // [행동 2] 사이드바 내용 즉시 교체
         updateSidebarContent(category);
 
-        // [행동 3] 사이드바 노출 (닫혀있었을 경우)
         if (!isOpen) {
             sidebar.classList.add('show');
         }
 
-        // 상단 마더 탭 활성화 클래스 처리
         document.querySelectorAll('.mother-tab').forEach(tab => tab.classList.remove('active'));
         if(event) event.currentTarget.classList.add('active');
     };
@@ -6362,13 +6365,10 @@
         sidebarCategoryTitle.innerText = data.title;
         sidebarCategoryTitle.style.color = data.color;
 
-        // 자식 메뉴 생성 시 분기 처리 로직 추가
         sidebarContent.innerHTML = data.items.map(item => {
             if (item.url) {
-                // URL이 있는 경우: 새 창으로 열기 (또는 _self로 현재창 이동)
                 return `<div class="child-item" onclick="window.open('${item.url}', '_blank'); event.stopPropagation();" style="color: var(--accent-mint); font-weight: 800;">${item.name}</div>`;
             } else {
-                // 기존 방식: 슬라이드 이동
                 return `<div class="child-item" onclick="scrollToSlide(${item.index}, event)">${item.name}</div>`;
             }
         }).join('');
@@ -6412,7 +6412,7 @@
         if(sections[0]) sections[0].scrollIntoView({ behavior: 'auto', block: 'center' });
     });
 
-    // [9] 실제 스크롤 시 인덱스 동기화 (사이드바는 닫지 않음 - 즐겨찾기 용도 유지)
+    // [9] 실제 스크롤 시 인덱스 동기화
     scrollContainer.addEventListener('scroll', () => {
         const pageHeight = window.innerHeight;
         currentSectionIndex = Math.round(scrollContainer.scrollTop / pageHeight);
@@ -6437,51 +6437,46 @@
         }
     };
 
-    // [12] 보안 로직 (우클릭 및 F12 방지 유지)
+    // [12] 보안 로직
     document.addEventListener('contextmenu', e => e.preventDefault());
     document.addEventListener('keydown', e => {
         if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I')) {
             e.preventDefault();
         }
     });
+
     /* =========================================
-       5. [핵심 수정] 하이브리드 화면 맞춤 로직
-       PC: 스크롤 막고 한눈에 보기 / 모바일: 스크롤&줌 허용
+       5. [핵심 수정] 하이브리드 화면 맞춤 로직 (모바일 줌 허용)
        ========================================= */
     
-    // 모바일 기기 감지
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        let currentScale = 1.0;
+    let currentScale = 1.0;
 
-        if (isMobile) {
-            document.body.style.overflow = 'auto'; 
-            document.body.style.touchAction = 'pan-y'; 
-            
-            // ★ [추가] 모바일/패드일 경우 body에 클래스 추가
-            document.body.classList.add('mobile-mode'); 
-        } else {
-            document.body.style.overflow = 'hidden'; 
-            document.body.style.touchAction = 'auto';
-        }
+    if (isMobile) {
+        document.body.style.overflow = 'auto'; 
+        // ★ [수정] 핀치줌 허용을 위해 auto로 변경
+        document.body.style.touchAction = 'auto'; 
+        
+        document.body.classList.add('mobile-mode'); 
+    } else {
+        document.body.style.overflow = 'hidden'; 
+        document.body.style.touchAction = 'auto';
+    }
 
     function fitSlideToScreen() {
         const slides = document.querySelectorAll('.slide');
         const baseWidth = 1280; 
         const baseHeight = 720; 
-        const navHeight = 65; // 메뉴바 높이
+        const navHeight = 65; 
         
-        // 현재 브라우저 크기
         const windowWidth = window.innerWidth;
         const windowHeight = window.innerHeight - navHeight; 
 
-        // PC에서는 화면에 꽉 차게 계산
         let scaleX = windowWidth / baseWidth;
         let scaleY = windowHeight / baseHeight;
         
-        // 더 작은 비율에 맞춰서 잘림 방지
         let scale = Math.min(scaleX, scaleY);
 
-        // PC는 살짝 여유를 둠 (0.9), 모바일은 거의 꽉 차게 (0.95)
         scale *= isMobile ? 0.95 : 0.90;
 
         currentScale = scale;
@@ -6491,7 +6486,6 @@
         });
     }
 
-    // 수동 줌 컨트롤
     window.controlZoom = function(change) {
         currentScale += change;
         if (currentScale < 0.2) currentScale = 0.2;
@@ -6503,20 +6497,17 @@
         });
     };
 
-    // [이벤트 리스너 등록]
     window.addEventListener('load', () => {
         if(sections[0]) sections[0].scrollIntoView({ behavior: 'auto', block: 'center' });
         fitSlideToScreen();
     });
 
-    // PC: 창 크기 조절 시 실시간 반응
     window.addEventListener('resize', () => {
         if (!isMobile) {
             fitSlideToScreen();
         }
     });
 
-    // 모바일: 회전할 때만 반응 (줌 할때는 반응 X)
     window.addEventListener('orientationchange', () => {
         setTimeout(fitSlideToScreen, 200);
     });
